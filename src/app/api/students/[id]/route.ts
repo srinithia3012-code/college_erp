@@ -1,19 +1,12 @@
-/** biome-ignore-all lint/style/useImportType: <explanation> */
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db/index";
 import { students } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
 
-type RouteContext = {
-  params: {
-    id: string;
-  };
-};
-
 // GET single student by id
 export async function GET(
   _req: NextRequest,
-  context: RouteContext
+  context: { params: { id: string } }
 ) {
   try {
     const { id } = context.params;
@@ -43,7 +36,7 @@ export async function GET(
 // PUT update student
 export async function PUT(
   req: NextRequest,
-  context: RouteContext
+  context: { params: { id: string } }
 ) {
   try {
     const { id } = context.params;
@@ -79,7 +72,7 @@ export async function PUT(
 // DELETE single student
 export async function DELETE(
   _req: NextRequest,
-  context: RouteContext
+  context: { params: { id: string } }
 ) {
   try {
     const { id } = context.params;
