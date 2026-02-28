@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db/index";
 import { students } from "@/server/db/schema";
-import { eq } from "drizzle-orm"; // <-- import eq helper
+import { eq } from "drizzle-orm";
 
-// GET single student by id
-export async function GET(req: NextRequest) {
+// GET all students
+export async function GET(_req: NextRequest) {
   try {
     const allStudents = await db.select().from(students);
     return NextResponse.json(allStudents);
@@ -15,9 +15,14 @@ export async function GET(req: NextRequest) {
 }
 
 // PUT update student
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  req: NextRequest, 
+  context: { params: Promise<{ id: string }> } // Fix: Change to Promise
+) {
   try {
+    const { id } = await context.params; // Fix: Await the promise
     const body = await req.json();
+
     const updated = await db
       .update(students)
       .set({
@@ -25,7 +30,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         last_name: body.last_name,
         email: body.email,
       })
-      .where(eq(students.id, params.id))
+      .where(eq(students.id, id))
       .returning();
 
     if (!updated || updated.length === 0) {
@@ -39,9 +44,14 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 // DELETE single student
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: NextRequest, 
+  context: { params: Promise<{ id: string }> } // Fix: Change to Promise
+) {
   try {
-    await db.delete(students).where(eq(students.id, params.id));
+    const { id } = await context.params; // Fix: Await the promise
+
+    await db.delete(students).where(eq(students.id, id));
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("Failed to delete student:", err);
