@@ -3,13 +3,17 @@ import { db } from "@/server/db/index";
 import { students } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
 
+// 1. Define a shared type for the async context
+type RouteContext = { params: Promise<{ id: string }> };
+
 // GET single student by id
 export async function GET(
   _req: NextRequest,
-  context: { params: { id: string } }
+  context: RouteContext // Updated type
 ) {
   try {
-    const { id } = context.params;
+    // 2. Await the params before using 'id'
+    const { id } = await context.params;
 
     const student = await db
       .select()
@@ -36,10 +40,10 @@ export async function GET(
 // PUT update student
 export async function PUT(
   req: NextRequest,
-  context: { params: { id: string } }
+  context: RouteContext // Updated type
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params; // Await params
     const body = await req.json();
 
     const updated = await db
@@ -72,10 +76,10 @@ export async function PUT(
 // DELETE single student
 export async function DELETE(
   _req: NextRequest,
-  context: { params: { id: string } }
+  context: RouteContext // Updated type
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params; // Await params
 
     await db.delete(students).where(eq(students.id, id));
 
