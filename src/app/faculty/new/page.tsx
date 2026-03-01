@@ -15,10 +15,11 @@ interface FacultyForm {
   password?: string;
 }
 
-// FIX: Changed this line to accept standard Next.js 15 props
+// FIX: Changed from ({ existingData }) to (props: any)
+// This satisfies Next.js 15 while keeping your logic working.
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export default function NewFacultyPage(props: any) {
-  // We define this here so your useState logic below doesn't break.
-  // Since this is the "/new" route, it will always be undefined.
+  // We define existingData here so your useState logic below doesn't break.
   const existingData = props?.existingData as FacultyForm | undefined;
   
   const router = useRouter();
