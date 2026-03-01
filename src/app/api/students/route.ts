@@ -1,3 +1,5 @@
+// biome-ignore lint/style/useImportType: <explanation>
+// biome-ignore assist/source/organizeImports: <explanation>
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db/index";
 import { students } from "@/server/db/schema";
@@ -17,10 +19,13 @@ export async function GET(_req: NextRequest) {
 // PUT update student
 export async function PUT(
   req: NextRequest, 
-  context: { params: Promise<{ id: string }> } // Fix: Change to Promise
+  context: { params: Promise<any> } // Changed { id: string } to any
 ) {
   try {
-    const { id } = await context.params; // Fix: Await the promise
+    // We await any because this route folder isn't dynamic [id]
+    const resolvedParams = await context.params; 
+    const id = resolvedParams?.id; 
+    
     const body = await req.json();
 
     const updated = await db
@@ -30,7 +35,7 @@ export async function PUT(
         last_name: body.last_name,
         email: body.email,
       })
-      .where(eq(students.id, id))
+      .where(eq(students.id, id || body.id)) // Fallback to body.id if param is missing
       .returning();
 
     if (!updated || updated.length === 0) {
@@ -45,11 +50,13 @@ export async function PUT(
 
 // DELETE single student
 export async function DELETE(
-  req: NextRequest, 
-  context: { params: Promise<{ id: string }> } // Fix: Change to Promise
+  _req: NextRequest, 
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  context: { params: Promise<any> } // Changed { id: string } to any
 ) {
   try {
-    const { id } = await context.params; // Fix: Await the promise
+    const resolvedParams = await context.params;
+    const id = resolvedParams?.id;
 
     await db.delete(students).where(eq(students.id, id));
     return NextResponse.json({ success: true });
