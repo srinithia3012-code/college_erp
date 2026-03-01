@@ -1,7 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+/** biome-ignore-all assist/source/organizeImports: <explanation> */
+import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db/index";
 import { students } from "@/server/db/schema";
 import { v4 as uuidv4 } from "uuid";
+// 1. Add this import to get the router creator
+// Added publicProcedure import to support the fix below
+import { createTRPCRouter, publicProcedure } from "./trpc"; 
 
 // GET all students
 export async function GET() {
@@ -37,3 +41,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to create student" }, { status: 500 });
   }
 }
+
+// --- ADDED FOR TRPC COMPATIBILITY ---
+
+// 2. Define the appRouter
+// FIX: Added a dummy procedure so tRPC recognizes this as a valid router
+export const appRouter = createTRPCRouter({
+  healthcheck: publicProcedure.query(() => "ok"),
+});
+
+// 3. Export the missing AppRouter type
+export type AppRouter = typeof appRouter;
+
+// 4. Export the caller (optional but good practice)
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+export const createCaller = (ctx: any) => appRouter.createCaller(ctx);
