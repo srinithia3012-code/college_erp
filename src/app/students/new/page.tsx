@@ -4,66 +4,122 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/utils/api";
 
-type Student = {
-  id: string;
+type Course = { id: string; name: string; code: string };
+
+type StudentForm = {
   first_name: string;
   last_name: string;
   email: string;
+  enrollment_no: string;
+  course_id: string;
 };
 
-export default function StudentsPage() {
+export default function NewStudentPage() {
   const router = useRouter();
-  const [students, setStudents] = useState<Student[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [form, setForm] = useState<StudentForm>({
+    first_name: "",
+    last_name: "",
+    email: "",
+    enrollment_no: "",
+    course_id: "",
+  });
 
   useEffect(() => {
-    const fetchStudents = async () => {
+    const load = async () => {
       try {
-        const data = await apiFetch("/api/students");
-        setStudents(data); // MUST be an array
+        const data = await apiFetch("/api/courses");
+        setCourses(data);
       } catch (err) {
         console.error(err);
-        setError("Failed to load students");
+        setError("Failed to load courses. Add a course first.");
       } finally {
         setLoading(false);
       }
     };
-    fetchStudents();
+    load();
   }, []);
 
-  if (loading) return <p className="text-gray-500">Loading students...</p>;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (!form.course_id) {
+      setError("Please select a course");
+      return;
+    }
+
+    try {
+      await apiFetch("/api/students", {
+        method: "POST",
+        body: JSON.stringify(form),
+      });
+      router.push("/students");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create student");
+    }
+  };
+
+  if (loading) return <p className="text-gray-500">Loading courses...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
-  if (students.length === 0) return <p className="text-gray-600">No students found.</p>;
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Student List</h1>
-      <table className="w-full border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border px-4 py-2 text-left">Name</th>
-            <th className="border px-4 py-2 text-left">Email</th>
-            <th className="border px-4 py-2 text-left">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {students.map((s) => (
-            <tr key={s.id} className="hover:bg-gray-50">
-              <td className="border px-4 py-2">{s.first_name} {s.last_name}</td>
-              <td className="border px-4 py-2">{s.email}</td>
-              <td className="border px-4 py-2">
-                <button
-                  onClick={() => router.push(`/students/${s.id}`)}
-                  className="bg-blue-600 text-white px-3 py-1 rounded"
-                >
-                  Edit
-                </button>
-              </td>
-            </tr>
+    <div className="max-w-xl mx-auto p-6 bg-white rounded shadow">
+      <h1 className="text-2xl font-bold mb-4">Add Student</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <input
+          name="first_name"
+          value={form.first_name}
+          onChange={(e) => setForm({ ...form, first_name: e.target.value })}
+          required
+          placeholder="First Name"
+          className="w-full border rounded p-2"
+        />
+        <input
+          name="last_name"
+          value={form.last_name}
+          onChange={(e) => setForm({ ...form, last_name: e.target.value })}
+          required
+          placeholder="Last Name"
+          className="w-full border rounded p-2"
+        />
+        <input
+          name="email"
+          type="email"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          required
+          placeholder="Email"
+          className="w-full border rounded p-2"
+        />
+        <input
+          name="enrollment_no"
+          value={form.enrollment_no}
+          onChange={(e) => setForm({ ...form, enrollment_no: e.target.value })}
+          required
+          placeholder="Enrollment No"
+          className="w-full border rounded p-2"
+        />
+        <select
+          value={form.course_id}
+          onChange={(e) => setForm({ ...form, course_id: e.target.value })}
+          required
+          className="w-full border rounded p-2"
+        >
+          <option value="">Select Course</option>
+          {courses.map((course) => (
+            <option key={course.id} value={course.id}>
+              {course.name} ({course.code})
+            </option>
           ))}
-        </tbody>
-      </table>
+        </select>
+        <button type="submit" className="w-full bg-blue-600 text-white rounded p-2">
+          Add Student
+        </button>
+      </form>
     </div>
   );
 }
+

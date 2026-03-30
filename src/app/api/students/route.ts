@@ -12,7 +12,37 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json(allStudents);
   } catch (err) {
     console.error("Failed to fetch student:", err);
-    return NextResponse.json({ error: "Failed to fetch student" }, { status: 500 });
+    const message = err instanceof Error ? err.message : "Failed to fetch student";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+// POST new student
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+
+    if (!body.first_name || !body.last_name || !body.email || !body.enrollment_no || !body.course_id) {
+      return NextResponse.json({ error: "first_name, last_name, email, enrollment_no and course_id are required" }, { status: 400 });
+    }
+
+    const insertValues = {
+      first_name: body.first_name,
+      last_name: body.last_name,
+      email: body.email,
+      password: body.password ?? "changeme",
+      enrollment_no: body.enrollment_no,
+      course_id: body.course_id,
+      ...(body.phone ? { phone: body.phone } : {}),
+      ...(body.address ? { address: body.address } : {}),
+    };
+
+    const newStudent = await db.insert(students).values(insertValues).returning();
+
+    return NextResponse.json(newStudent[0]);
+  } catch (err) {
+    console.error("Failed to create student:", err);
+    const message = err instanceof Error ? err.message : "Failed to create student";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 

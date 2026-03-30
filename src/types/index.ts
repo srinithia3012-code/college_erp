@@ -4,6 +4,8 @@ export type Student = {
   last_name: string;
   email: string;
   enrollment_no: string;
+  phone?: string;
+  address?: string;
 };
 
 export type Faculty = {
@@ -18,7 +20,8 @@ export type Course = {
   id: number;
   name: string;
   code: string;
-  credits: number;
+  description?: string;
+  faculty_id?: string;
 };
 
 export type Attendance = {

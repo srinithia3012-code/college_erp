@@ -4,10 +4,18 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { apiFetch } from "@/utils/api";
 
+type Faculty = {
+  id: string;
+  first_name: string;
+  last_name: string;
+};
+
 type Course = {
+  id: string;
   name: string;
   code: string;
-  credits: number;
+  description: string;
+  faculty_id: string;
 };
 
 export default function EditCoursePage() {
@@ -18,25 +26,35 @@ export default function EditCoursePage() {
   const [form, setForm] = useState({
     name: "",
     code: "",
-    credits: "",
+    description: "",
+    faculty_id: "",
   });
 
+  const [facultyList, setFacultyList] = useState<Faculty[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch course
+  // Fetch course and faculty list
   useEffect(() => {
     if (!id) return;
 
-    const fetchCourse = async () => {
+    const fetchAll = async () => {
       try {
-        const data: Course = await apiFetch(`/api/courses/${id}`);
+        const [courseData, facultyData] = await Promise.all([
+          apiFetch(`/api/courses?id=${id}`),
+          apiFetch("/api/faculty"),
+        ]);
+
+        const course = courseData as Course;
         setForm({
-          name: data.name,
-          code: data.code,
-          credits: data.credits.toString(),
+          name: course.name,
+          code: course.code,
+          description: course.description || "",
+          faculty_id: course.faculty_id || "",
         });
+
+        setFacultyList(facultyData as Faculty[]);
       } catch (err) {
         setError("Failed to load course");
       } finally {
@@ -44,7 +62,7 @@ export default function EditCoursePage() {
       }
     };
 
-    fetchCourse();
+    fetchAll();
   }, [id]);
 
   // Update course
@@ -53,12 +71,18 @@ export default function EditCoursePage() {
     setSaving(true);
     setError(null);
 
+    if (!form.faculty_id) {
+      setError("Please select a faculty for this course.");
+      setSaving(false);
+      return;
+    }
+
     try {
-      await apiFetch(`/api/courses/${id}`, {
+      await apiFetch("/api/courses", {
         method: "PUT",
         body: JSON.stringify({
+          id,
           ...form,
-          credits: Number(form.credits),
         }),
       });
 
@@ -78,7 +102,10 @@ export default function EditCoursePage() {
     if (!confirmDelete) return;
 
     try {
-      await apiFetch(`/api/courses/${id}`, { method: "DELETE" });
+      await apiFetch("/api/courses", {
+        method: "DELETE",
+        body: JSON.stringify({ id }),
+      });
       router.push("/courses");
     } catch (err) {
       setError("Failed to delete course");
@@ -120,16 +147,28 @@ export default function EditCoursePage() {
         required
       />
 
-      <input
-        type="number"
-        value={form.credits}
-        placeholder="Credits"
+      <textarea
+        value={form.description}
+        placeholder="Description"
         className="w-full border p-2 rounded"
         onChange={(e) =>
-          setForm({ ...form, credits: e.target.value })
+          setForm({ ...form, description: e.target.value })
         }
-        required
       />
+
+      <select
+        value={form.faculty_id}
+        onChange={(e) => setForm({ ...form, faculty_id: e.target.value })}
+        required
+        className="w-full border p-2 rounded"
+      >
+        <option value="">Select Faculty</option>
+        {facultyList.map((faculty) => (
+          <option key={faculty.id} value={faculty.id}>
+            {faculty.first_name} {faculty.last_name}
+          </option>
+        ))}
+      </select>
 
       <div className="flex gap-4">
         <button

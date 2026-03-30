@@ -37,6 +37,8 @@ export const students = pgTable("students", {
   password: varchar("password", { length: 255 }).notNull(),
   enrollment_no: varchar("enrollment_no", { length: 20 }).notNull(),
   course_id: uuid("course_id").notNull(),
+  phone: varchar("phone", { length: 30 }),
+  address: text("address"),
   created_at: timestamp("created_at").defaultNow(),
 });
 

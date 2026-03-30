@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { apiFetch } from "@/utils/api";
 
-type StudentForm = { first_name: string; last_name: string; email: string };
+type StudentForm = { first_name: string; last_name: string; email: string; enrollment_no: string; course_id?: string; phone?: string; address?: string };
 
 export default function EditStudentPage() {
   const { id } = useParams();
@@ -14,6 +14,10 @@ export default function EditStudentPage() {
     first_name: "",
     last_name: "",
     email: "",
+    enrollment_no: "",
+    course_id: "",
+    phone: "",
+    address: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -25,13 +29,24 @@ export default function EditStudentPage() {
     apiFetch(`/api/students/${id}`)
       .then((data) => {
         if (!data?.id) setError("Student not found");
-        else setForm({ first_name: data.first_name, last_name: data.last_name, email: data.email });
+        else
+          setForm({
+            first_name: data.first_name || "",
+            last_name: data.last_name || "",
+            email: data.email || "",
+            enrollment_no: data.enrollment_no || "",
+            course_id: data.course_id || "",
+            phone: data.phone || "",
+            address: data.address || "",
+          });
       })
       .catch(() => setError("Failed to load student data"))
       .finally(() => setLoading(false));
   }, [id]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -41,7 +56,13 @@ export default function EditStudentPage() {
     setError("");
 
     try {
-      await apiFetch(`/api/students/${id}`, { method: "PUT", body: JSON.stringify(form) });
+      await apiFetch(`/api/students/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          phone: form.phone,
+          address: form.address,
+        }),
+      });
       router.push("/students");
     } catch {
       setError("Failed to update student");
@@ -58,9 +79,19 @@ export default function EditStudentPage() {
       {error && <p className="text-red-500 mb-4">{error}</p>}
 
       <form onSubmit={handleUpdate} className="space-y-4">
-        <input name="first_name" value={form.first_name} onChange={handleChange} required className="w-full border p-2 rounded" />
-        <input name="last_name" value={form.last_name} onChange={handleChange} required className="w-full border p-2 rounded" />
-        <input name="email" type="email" value={form.email} onChange={handleChange} required className="w-full border p-2 rounded" />
+        <div className="grid grid-cols-1 gap-2">
+          <label className="text-sm text-gray-700">Name</label>
+          <p className="bg-gray-100 border border-gray-200 p-2 rounded">{form.first_name} {form.last_name}</p>
+
+          <label className="text-sm text-gray-700">Email</label>
+          <p className="bg-gray-100 border border-gray-200 p-2 rounded">{form.email}</p>
+
+          <label className="text-sm text-gray-700">Enrollment No</label>
+          <p className="bg-gray-100 border border-gray-200 p-2 rounded">{form.enrollment_no}</p>
+        </div>
+
+        <input name="phone" value={form.phone} onChange={handleChange} placeholder="Phone number" className="w-full border p-2 rounded" />
+        <textarea name="address" value={form.address} onChange={handleChange} placeholder="Address" className="w-full border p-2 rounded" />
         <button type="submit" disabled={saving} className="bg-blue-600 text-white px-4 py-2 rounded">
           {saving ? "Updating..." : "Update"}
         </button>

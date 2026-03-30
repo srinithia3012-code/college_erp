@@ -26,7 +26,7 @@ export default function CoursesPage() {
           <tr>
             <th className="p-2">Name</th>
             <th className="p-2">Code</th>
-            <th className="p-2">Credits</th>
+            <th className="p-2">Description</th>
             <th className="p-2">Action</th>
           </tr>
         </thead>
@@ -35,7 +35,7 @@ export default function CoursesPage() {
             <tr key={c.id} className="border-t">
               <td className="p-2">{c.name}</td>
               <td className="p-2">{c.code}</td>
-              <td className="p-2">{c.credits}</td>
+              <td className="p-2">{c.description || "-"}</td>
               <td className="p-2">
                 <Link href={`/courses/${c.id}`} className="text-blue-600">
                   Edit

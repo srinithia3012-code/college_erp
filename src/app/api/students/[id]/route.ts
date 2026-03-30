@@ -51,9 +51,8 @@ export async function PUT(
     const updated = await db
       .update(students)
       .set({
-        first_name: body.first_name,
-        last_name: body.last_name,
-        email: body.email,
+        phone: body.phone || null,
+        address: body.address || null,
       })
       .where(eq(students.id, id))
       .returning();
